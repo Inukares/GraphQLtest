@@ -23,7 +23,6 @@ export default class ListProducts extends Component {
             email: "goto@gmail.com",
             content: "some content"
         };
-        console.log(variables.value)
      
         // It should be possible to allow query to look graphql-like, however to shorten doing time I changed it like this
         const query = `
@@ -34,8 +33,7 @@ export default class ListProducts extends Component {
         //Should be used to initialize headers, not sure yet how to do it
         apolloFetch.use(({ request, options }, next) => {
             if (!options.headers) {
-            options.headers = {};  // Create the headers object if needed.
-            console.log(options.headers);
+            options.headers = {};
             }
             next();
         });
