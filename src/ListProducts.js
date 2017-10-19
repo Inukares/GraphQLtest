@@ -6,69 +6,43 @@ export default class ListProducts extends Component {
     constructor(props){
         super(props)
 
-        this.state = {} // Will probably add message on failed fetch.
+        this.state = {}
     }
 
     getRating = (e, id) => {
         e.preventDefault();
-        const value = parseInt(e.target.newItem.value)
-      //  value = parseInt(value); 
-      if(value > 0 && value <= 5){
-            this.setState({
-                message:""
-            })
+        const value = e.target.newItem.value
 
-            const uri = '//188.116.11.87/graphiql';
-    
-            const query = `
-            mutation{
-                rating(group_id: 3, product_id: $product_id, value: $value, name: $name, phone: $phone, email: $email, content:$content) {
-                product_id,
-                value,
-                }
+        const uri = '//188.116.11.87/graphql';
+
+        const variables = {
+            product_id: id,
+            value: value,
+            name: "wq",
+            phone: "601654654",
+            email: "goto@gmail.com",
+            content: "some content"
+        };
+        console.log(variables.value)
+     
+        // It should be possible to allow query to look graphql-like, however to shorten doing time I changed it like this
+        const query = `
+        mutation{rating(group_id: 3, product_id: ${variables.product_id}, value: ${variables.value}, name:"${variables.name}", phone: "${variables.phone}", email: "${variables.email}", content:"${variables.content}"){product_id, value}}`;
+   
+        const apolloFetch = createApolloFetch({ uri });
+
+        //Should be used to initialize headers, not sure yet how to do it
+        apolloFetch.use(({ request, options }, next) => {
+            if (!options.headers) {
+            options.headers = {};  // Create the headers object if needed.
+            console.log(options.headers);
             }
-            `;
-
-            const variables = {
-                product_id: id,
-                value: value,
-                name: "wq",
-                phone: "601654654",
-                email: "goto@gmail.com",
-                content: "some content"
-            };
-
-            const apolloFetch = createApolloFetch({ uri });
-            /*
-            const header = `Access-Control-Allow-Credentials:true  
-            Access-Control-Allow-Methods:POST, GET  
-            Access-Control-Allow-Origin:http://localhost:3000  
-            Access-Control-Expose-Headers:  
-            Access-Control-Max-Age:1728000`
-            */
-
-            //Should be used to initialize headers, not sure yet how to do it
-            apolloFetch.use(({ request, options }, next) => {
-                if (!options.headers) {
-                options.headers = {};  // Create the headers object if needed.
-                console.log(options.headers);
-                }
-                options.headers['authorization'] = 'created token';
-                options.headers['Acces-Control-Allow-Credentials'] = 'true';
-                options.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000';
-                options.headers['Access-Control-Max-Age:1728000`'] = '1728000';
-            
-                next();
-            });
-            // after fetching, display rating according to the user input
-            apolloFetch({ query, variables }).then(res =>{
-                console.log(res)
-            });
-        }else {
-            this.setState({
-                message:'Value must be a number from 1 to 5!'
-            })
-        }
+            next();
+        });
+        // after fetching, display rating according to the user input
+        apolloFetch({ query, variables }).then(res =>{
+            this.props.setRating(id, value);
+        });   
     }  
 
     renderList = () => {
@@ -76,7 +50,7 @@ export default class ListProducts extends Component {
         const list = products.map (product => {
             const { id, name, description, author, is_published, keywords } = product
             return (
-                <div key={id} className="productsList">
+                <div key={(function(){return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);}()) } className="productsList">
                     {id && <strong>Id:</strong> } {id}
                     {name && <strong> <br/> Name:</strong>} {name}
                     {description && <strong> <br/> Description:</strong> } {description}
@@ -84,11 +58,12 @@ export default class ListProducts extends Component {
                     {is_published && <strong> <br/> is_published</strong> } {is_published} 
                     {keywords.length > 1 && <strong> <br/> keywords</strong> } {keywords}
                     {<strong> <br/> Your rating: </strong>}
+                    <strong>{product.rating}</strong>
 
                     <form className="form-inline" onSubmit={(e) => {this.getRating(e, id)}}>
                     <div className="form-group">
                         <label className="sr-only" htmlFor="newItemInput">Add New Item</label>
-                        <input ref={input => this.newItem = input} type="text" placeholder="Type stars from 1 to 5" className="form-control" id="newItem"></input>
+                        <input ref={input => this.newItem = input} type="number"min="1" max="5" placeholder="Type stars from 1 to 5" className="form-control" id="newItem"></input>
                     </div>
                     <Button type="submit" bsStyle="primary">Add</Button>
                     </form>
@@ -96,6 +71,7 @@ export default class ListProducts extends Component {
                 </div>
             )
         })
+
         return <div>{list}</div>
     }
 
